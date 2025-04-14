@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
@@ -90,7 +91,15 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	prefix, err := getVideoAspectRatio(tempFile.Name())
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error determining aspect ratio", err)
+		return
+	}
+
 	objectKey := getAssetPath(mediaType)
+	objectKey = filepath.Join(prefix, objectKey)
 
 	s3Payload := &s3.PutObjectInput{Bucket: &cfg.s3Bucket, Key: &objectKey, Body: tempFile, ContentType: &mediaType}
 
